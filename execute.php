@@ -63,7 +63,13 @@ switch($text){
     break;
 
   case "/takepizze":
-    printPizze($chatId);
+    if($username == "")
+      printPizze($chatId);
+    else {
+      $parameters = array('chat_id' => $chatId, "text" => "Comando utilizzabile solo dall'Admin" . "\u{1F610}");
+      $parameters["method"] = "sendMessage";
+      echo json_encode($parameters);
+    }
     break;
 
   default:

@@ -10,7 +10,13 @@ function other ($text, $chatId, $username){
 }
 
 function printPizze($chatId){
-  $contents = file('pizze.txt');
+  if(is_file('pizze.txt')) $contents = file('pizze.txt');
+  else{
+  $parameters = array('chat_id' => $chatId, "text" => "Nessuna Pizza è stata ordinata" . "\u{1F62A}");
+  $parameters["method"] = "sendMessage";
+  echo json_encode($parameters);
+  }
+  
   $parole = array();
   $stringa =  "";
   foreach ($contents as $value) {
