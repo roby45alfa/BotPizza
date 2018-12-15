@@ -18,6 +18,11 @@ $text = isset($message['text']) ? $message['text'] : "";
 $response = "";
 $parameters = "";
 
+if (!date_order_pizza($date)){
+  $parameters = array('chat_id' => $chatId, "text" => "Oggi non puoi ordinare le pizze,\nMi spiace"."\u{1F636}");
+  $parameters["method"] = "sendMessage";
+  echo json_encode($parameters);
+};
 $text = trim($text);
 
 header("Content-Type: application/json; charset=utf-8");
@@ -44,6 +49,7 @@ switch($text){
   case "Americana con Bufala":
 
   case "Diavola":
+    if (W_R_chatId($chatId)) already_ordered_Send_Message($chatId, $username);
     $pizza = $text;
     $pizza = strtolower($pizza);
     $fp = fopen("pizze.txt", "a+");
@@ -63,7 +69,7 @@ switch($text){
     break;
 
   case "/takepizze":
-    if($username == "")
+    if($username == "Roby45Alfa")
       printPizze($chatId);
     else {
       $parameters = array('chat_id' => $chatId, "text" => "Comando utilizzabile solo dall'Admin" . "\u{1F610}");
