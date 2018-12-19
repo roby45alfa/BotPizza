@@ -4,7 +4,6 @@ $content = file_get_contents("php://input");
 $update = json_decode($content, true);
 
 if(!$update) exit;
-
 $message = isset($update['message']) ? $update['message'] : "";
 $messageId = isset($message['message_id']) ? $message['message_id'] : "";
 $chatId = isset($message['chat']['id']) ? $message['chat']['id'] : "";
@@ -14,19 +13,31 @@ $username = isset($message['chat']['username']) ? $message['chat']['username'] :
 $replymessage = isset($message["reply_to_message"]) ? $message["reply_to_message"] : "";
 $photo = isset($message['photo']) ? $message['photo'] : "";
 $date = isset($message['date']) ? $message['date'] : "";
-$text = isset($message['text']) ? $message['text'] : "";
+$cb_date = isset($update['callback_query']['message']['date']) ? $update['callback_query']['message']['date'] : "";
+$text = isset($message['text']) ? $message['text'] : ""; 
+$cb_data = isset($update["callback_query"]["data"]) ? $update["callback_query"]["data"] : "";
+$cb_id = isset($update["callback_query"]["from"]["id"]) ? $update["callback_query"]["from"]["id"] : "";
 $response = "";
 $parameters = "";
-
-if (!date_order_pizza($date)){
-  $parameters = array('chat_id' => $chatId, "text" => "Oggi non puoi ordinare le pizze,\nMi spiace"."\u{1F636}");
-  $parameters["method"] = "sendMessage";
-  echo json_encode($parameters);
-};
 $text = trim($text);
 
 header("Content-Type: application/json; charset=utf-8");
+
+if($cb_date == ""){
+  if (date_order_pizza($date)){
+    $parameters = array('chat_id' => $chatId, "text" => "Oggi non puoi ordinare le pizze,\nMi spiace"."\u{1F636}");
+    $parameters["method"] = "sendMessage";
+    echo json_encode($parameters);
+  }
+}
+
 if($replymessage != "") other($text, $chatId, $username);
+
+if($cb_data == "changepizza" ){
+  $parameters = array('chat_id' => $cb_id, "text" => "Comando non ancora disponibile". "\u{1F62B}");
+  $parameters["method"] = "sendMessage";
+  echo json_encode($parameters);
+}
 
 switch($text){
   case "/start":
@@ -57,6 +68,8 @@ switch($text){
     fclose($fp);
     $parameters = array('chat_id' => $chatId, "text" => "Grazie $username"."  \u{1F60E}");
     $parameters["method"] = "sendMessage";
+    $keyboard = ['inline_keyboard' => [[['text' =>  'Cambia Pizza', 'callback_data'=> 'changepizza' ]]]];
+    $parameters["reply_markup"] = json_encode($keyboard, true);
     echo json_encode($parameters);
     break;
     

@@ -49,9 +49,10 @@ function already_ordered_Send_Message($chatId, $username){
   $parameters["method"] = "sendMessage";
   echo json_encode($parameters);
 }
+
  function date_order_pizza($data){
    $giorno = date("w", $data);
-   if($giorno == "5") return true;
-   else return false;
+   if($giorno == "3") return false;
+   else return true;
 }
 
