@@ -1,4 +1,5 @@
 <?php
+
 function other ($text, $chatId, $username){
   if (W_R_chatId($chatId)) already_ordered_Send_Message($chatId, $username);
   $altro = strtolower($text);
@@ -27,15 +28,17 @@ function printPizze($chatId){
   foreach ($parole as $key => $val) {
     $stringa.=  "$val x  $key\n";
   } 
+  $mysqli = new mysqli('localhost', 'domotica2001', '', 'my_domotica2001');
+  $mysqli->query("ALTER TABLE `Pizze`\n"  . "auto_increment = 1;");
   unlink("pizze.txt");
-  unlink("chatId");
+  unlink("chatId.txt");
   $parameters = array('chat_id' => $chatId, "text" => "$stringa");
   $parameters["method"] = "sendMessage";
   echo json_encode($parameters);
 }
 
 function W_R_chatId($chatId){
-  $f= fopen("chatId", "a+");
+  $f= fopen("chatId.txt", "a+");
   while (!feof($f)){
     if(fgets($f) == $chatId) return true;
   }
@@ -50,9 +53,20 @@ function already_ordered_Send_Message($chatId, $username){
   echo json_encode($parameters);
 }
 
- function date_order_pizza($data){
+function date_order_pizza($data){
    $giorno = date("w", $data);
-   if($giorno == "3") return false;
+   if($giorno == "1") return false;
    else return true;
 }
 
+
+  function insertinto_database_pizza($pizza){
+    $mysqli = new mysqli('localhost', '', '', '');
+    $result = $mysqli->query("SELECT * FROM `Pizze` WHERE `Pizza` = '$pizza'");
+    if($result->num_rows > 0){
+       $result = $mysqli->query("UPDATE ``.`Pizze` SET `Num` = (Num+1) WHERE `Pizze`.`Pizza` = '$pizza'");
+    }
+    else{
+      $result = $mysqli->query("INSERT INTO ``.`Pizze` (`Id`, `Pizza`, `Num`) VALUES (NULL, '$pizza', '1')");
+  }
+}

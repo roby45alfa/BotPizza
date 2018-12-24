@@ -1,5 +1,6 @@
 <?php
 require_once "function.php";
+
 $content = file_get_contents("php://input");
 $update = json_decode($content, true);
 
@@ -42,6 +43,7 @@ if($cb_data == "changepizza" ){
 switch($text){
   case "/start":
   case "/pizza":
+    
     $response = "Che pizza vuoi?". "   \u{1F60B}";
     $parameters = array('chat_id' => $chatId, "text" => $response);
     $parameters["method"] = "sendMessage";
@@ -66,6 +68,7 @@ switch($text){
     $fp = fopen("pizze.txt", "a+");
     fwrite($fp, "$pizza\n");
     fclose($fp);
+    insertinto_database_pizza($pizza);
     $parameters = array('chat_id' => $chatId, "text" => "Grazie $username"."  \u{1F60E}");
     $parameters["method"] = "sendMessage";
     $keyboard = ['inline_keyboard' => [[['text' =>  'Cambia Pizza', 'callback_data'=> 'changepizza' ]]]];
