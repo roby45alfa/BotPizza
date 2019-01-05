@@ -3,48 +3,38 @@
 function other ($text, $chatId, $username){
   if (W_R_chatId($chatId)) already_ordered_Send_Message($chatId, $username);
   $altro = strtolower($text);
-  $fp = fopen("pizze.txt", "a+");
-  fwrite($fp, "$altro\n");
-  fclose($fp);
+  insertinto_database_pizza($text, $chatId);
   $parameters = array('chat_id' => $chatId, "text" => "Grazie $username"."\u{1F600}");
   $parameters["method"] = "sendMessage";
   echo json_encode($parameters);
 }
 
 function printPizze($chatId){
-  if(is_file('pizze.txt')) $contents = file('pizze.txt');
-  else{
+  $mysqli = new mysqli('localhost', 'domotica2001', '', 'my_domotica2001');
+  $result = $mysqli->query("SELECT `Pizza`,`Num` FROM `Pizze`");
+  if(!$result->num_rows){
   $parameters = array('chat_id' => $chatId, "text" => "Nessuna Pizza è stata ordinata" . "\u{1F62A}");
   $parameters["method"] = "sendMessage";
   echo json_encode($parameters);
   }
-  $parole = array();
-  $stringa =  "";
-  foreach ($contents as $value) {
-  $value = trim($value);
-  $parole[$value]++;
+  $pizze = "";
+  while($pizzeArray = $result->fetch_array(MYSQLI_ASSOC)){
+    $pizze .=$pizzeArray['Num'] . " " . $pizzeArray['Pizza'] . "\n"; 
   }
-  arsort($parole, SORT_NUMERIC);
-  foreach ($parole as $key => $val) {
-    $stringa.=  "$val x  $key\n";
-  } 
-  $mysqli = new mysqli('localhost', 'domotica2001', '', 'my_domotica2001');
-  $mysqli->query("ALTER TABLE `Pizze`\n"  . "auto_increment = 1;");
-  unlink("pizze.txt");
-  unlink("chatId.txt");
-  $parameters = array('chat_id' => $chatId, "text" => "$stringa");
+  $mysqli->query("TRUNCATE TABLE `Pizze`");
+  $mysqli->query("TRUNCATE TABLE `ChatId`");
+  $parameters = array('chat_id' => $chatId, "text" => "$pizze");
   $parameters["method"] = "sendMessage";
   echo json_encode($parameters);
 }
 
 function W_R_chatId($chatId){
-  $f= fopen("chatId.txt", "a+");
-  while (!feof($f)){
-    if(fgets($f) == $chatId) return true;
-  }
-  fwrite($f, "$chatId\n");
-  fclose($f);
+  $mysqli = new mysqli('localhost', 'domotica2001', '', 'my_domotica2001');
+  $result = $mysqli->query("SELECT * FROM `ChatId` WHERE `ChatId` = '$chatId'");
+  if($result->num_rows > 0) return true;
+  $result = $mysqli->query("INSERT INTO `ChatId` (`Id`, `ChatId`) VALUES (0, '$chatId')");
   return false;
+  
 }
 
 function already_ordered_Send_Message($chatId, $username){
@@ -55,18 +45,35 @@ function already_ordered_Send_Message($chatId, $username){
 
 function date_order_pizza($data){
    $giorno = date("w", $data);
-   if($giorno == "1") return false;
+   if($giorno == "6") return false;
    else return true;
 }
 
 
-  function insertinto_database_pizza($pizza){
-    $mysqli = new mysqli('localhost', '', '', '');
-    $result = $mysqli->query("SELECT * FROM `Pizze` WHERE `Pizza` = '$pizza'");
-    if($result->num_rows > 0){
-       $result = $mysqli->query("UPDATE ``.`Pizze` SET `Num` = (Num+1) WHERE `Pizze`.`Pizza` = '$pizza'");
-    }
-    else{
-      $result = $mysqli->query("INSERT INTO ``.`Pizze` (`Id`, `Pizza`, `Num`) VALUES (NULL, '$pizza', '1')");
+function insertinto_database_pizza($pizza, $chatId){
+  $mysqli = new mysqli('localhost', 'domotica2001', '', 'my_domotica2001');
+  $result = $mysqli->query("SELECT * FROM `Pizze` WHERE `Pizza` = '$pizza'");
+  if($result->num_rows > 0){
+     $result = $mysqli->query("UPDATE `my_domotica2001`.`Pizze` SET `Num` = (Num+1) WHERE `Pizze`.`Pizza` = '$pizza'");
+ }
+  else{
+    $result = $mysqli->query("INSERT INTO `my_domotica2001`.`Pizze` (`Id`, `Pizza`, `Num`) VALUES (NULL, '$pizza', '1')");
   }
+  $result = $mysqli->query("SELECT `Id` FROM `Pizze` WHERE `Pizza` = '$pizza'");
+  $num = $result->fetch_array(MYSQLI_ASSOC);
+  $num = $num["Id"];
+  $mysqli->query("UPDATE `ChatId` Set `Id` = $num WHERE `ChatId` = '$chatId'");
+ 
+}
+function changePizza($pizza, $chatId){
+  $mysqli = new mysqli('localhost', 'domotica2001', '', 'my_domotica2001');
+  $resultChatId = $mysqli->query("SELECT `Id` FROM `ChatId` WHERE `ChatId` = '$chatId'");
+  $num = $resultChatId->fetch_array(MYSQLI_ASSOC);
+  $num = $num["Id"];
+
+  $resultPizze = $mysqli->query("SELECT `Pizza` FROM `Pizze` WHERE `Id` = '$num'");
+  if($resultPizze->num_rows == 1) $mysqli->query("DELETE FROM `Pizze` WHERE `Id` = $num");
+  else $mysqli->query("UPDATE `my_domotica2001`.`Pizze` SET `Num` = (Num-1) WHERE `Pizze`.`Id` = '$num'");
+  $pizza = str_replace("change/","",$pizza);
+  insertinto_database_pizza($pizza, $chatId);
 }

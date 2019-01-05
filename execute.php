@@ -35,8 +35,10 @@ if($cb_date == ""){
 if($replymessage != "") other($text, $chatId, $username);
 
 if($cb_data == "changepizza" ){
-  $parameters = array('chat_id' => $cb_id, "text" => "Comando non ancora disponibile". "\u{1F62B}");
+
+  $parameters = array('chat_id' => $cb_id, "text" => "Che Pizza Vuoi?". "   \u{1F60B}");
   $parameters["method"] = "sendMessage";
+  $parameters["reply_markup"] = '{ "keyboard": [[" change/Margherita","change/Americana","change/4 Formaggi e Patatine"], ["change/Americana con Bufala","change/Diavola"],["change/Prosciutto","change/Altro"]], "one_time_keyboard": true}';
   echo json_encode($parameters);
 }
 
@@ -47,7 +49,7 @@ switch($text){
     $response = "Che pizza vuoi?". "   \u{1F60B}";
     $parameters = array('chat_id' => $chatId, "text" => $response);
     $parameters["method"] = "sendMessage";
-    $parameters["reply_markup"] = '{ "keyboard": [[" Margherita","Americana","4 Formaggi e Patatine"], ["Americana con Bufala","Diavola"],["Prosciutto","Altro"]], "one_time_keyboard": true}';
+    $parameters["reply_markup"] = '{ "keyboard": [["Margherita","Americana","4 Formaggi e Patatine"], ["Americana con Bufala","Diavola"],["Prosciutto","Altro"]], "one_time_keyboard": true}';
     echo json_encode($parameters);
     break;
   
@@ -62,13 +64,10 @@ switch($text){
   case "Americana con Bufala":
 
   case "Diavola":
-    if (W_R_chatId($chatId)) already_ordered_Send_Message($chatId, $username);
+    if (W_R_chatId($chatId)) {already_ordered_Send_Message($chatId, $username); exit;}
     $pizza = $text;
     $pizza = strtolower($pizza);
-    $fp = fopen("pizze.txt", "a+");
-    fwrite($fp, "$pizza\n");
-    fclose($fp);
-    insertinto_database_pizza($pizza);
+    insertinto_database_pizza($pizza,$chatId);
     $parameters = array('chat_id' => $chatId, "text" => "Grazie $username"."  \u{1F60E}");
     $parameters["method"] = "sendMessage";
     $keyboard = ['inline_keyboard' => [[['text' =>  'Cambia Pizza', 'callback_data'=> 'changepizza' ]]]];
@@ -83,6 +82,30 @@ switch($text){
     $parameters["reply_markup"] = '{ "force_reply": true}';
     echo json_encode($parameters);
     break;
+
+  case "change/Margherita":
+  
+  case "change/Prosciutto":
+      
+  case "change/Americana":
+
+  case "change/4 Formaggi e Patatine":
+
+  case "change/Americana con Bufala":
+
+  case "change/Diavola":
+    $pizza = $text;
+    $pizza = strtolower($pizza);
+    changePizza($pizza, $chatId); 
+    $parameters = array('chat_id' => $chatId, "text" => "Grazie $username"."  \u{1F60E}");
+    $parameters["method"] = "sendMessage";
+    $keyboard = ['inline_keyboard' => [[['text' =>  'Cambia Pizza', 'callback_data'=> 'changepizza' ]]]];
+    $parameters["reply_markup"] = json_encode($keyboard, true);
+    $parameters["reply_markup"] = '{"remove_keyboard": true}';
+    echo json_encode($parameters);
+    break;
+
+
 
   case "/takepizze":
     if($username == "Roby45Alfa")
