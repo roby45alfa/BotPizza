@@ -11,7 +11,7 @@ $chatId = isset($message['chat']['id']) ? $message['chat']['id'] : "";
 $firstname = isset($message['chat']['first_name']) ? $message['chat']['first_name'] : "";
 $lastname = isset($message['chat']['last_name']) ? $message['chat']['last_name'] : "";
 $username = isset($message['chat']['username']) ? $message['chat']['username'] : "";
-$replymessage = isset($message["reply_to_message"]) ? $message["reply_to_message"] : "";
+$replymessage = isset($message["reply_to_message"]["text"]) ? $message["reply_to_message"]["text"] : "";
 $photo = isset($message['photo']) ? $message['photo'] : "";
 $date = isset($message['date']) ? $message['date'] : "";
 $cb_date = isset($update['callback_query']['message']['date']) ? $update['callback_query']['message']['date'] : "";
@@ -31,6 +31,8 @@ if($cb_date == ""){
     echo json_encode($parameters);
   }
 }
+
+if($replymessage == "Inserisci la pizza che vuoi cambiare") other_change($text, $chatId, $username);
 
 if($replymessage != "") other($text, $chatId, $username);
 
@@ -96,6 +98,7 @@ switch($text){
   case "change/Diavola":
     $pizza = $text;
     $pizza = strtolower($pizza);
+    $pizza = str_replace("change/","",$pizza);
     changePizza($pizza, $chatId); 
     $parameters = array('chat_id' => $chatId, "text" => "Grazie $username"."  \u{1F60E}");
     $parameters["method"] = "sendMessage";
@@ -105,7 +108,13 @@ switch($text){
     echo json_encode($parameters);
     break;
 
-
+  case "change/Altro":
+    $response = "Inserisci la pizza che vuoi cambiare";
+    $parameters = array('chat_id' => $chatId, "text" => $response);
+    $parameters["method"] = "sendMessage";
+    $parameters["reply_markup"] = '{ "force_reply": true}';
+    echo json_encode($parameters);
+    break;
 
   case "/takepizze":
     if($username == "Roby45Alfa")
